@@ -9,7 +9,7 @@ print(apple_id)
 print(bundle_id)
 print(appid)
 
-TOKEN = "6815228522:AAFl1umxHLB0DCNSf0D3RDdiXPbUfr1Sc7E"
+TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
 chat_id = "729044367"
 message = f"Задание для УЗ {apple_id} успешно выполнено! Куплено приложение: {bundle_id};{appid}!"
 url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
