@@ -21,6 +21,15 @@ from rich.logging import RichHandler
 from rich.console import Console
 import rich
 
+import requests
+import os
+from dotenv import load_dotenv
+load_dotenv()
+apple_id = os.getenv('apple_id')
+bundle_id = os.getenv('bundle_id')
+appid = os.getenv('appid')
+
+
 rich.get_console().file = sys.stderr
 if rich.get_console().width < 100:
     rich.get_console().width = 100
@@ -320,6 +329,11 @@ class IPATool(object):
         e = _e # type: StoreException
         logger.fatal("Store %s failed! Message: %s%s" % (e.req, e.errMsg, " (errorType %s)" % e.errType if e.errType else ''))
         logger.fatal("    Raw Response: %s" % (e.resp))
+        TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
+        chat_id = "729044367"
+        message = f"Задание для УЗ {apple_id} успешно выполнено! Куплено приложение: {bundle_id};{appid}!"
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+        logger.fatal(requests.get(url).json())
 
     def handlePurchase(self, args):
         Store = self._get_StoreClient(args)
@@ -543,6 +557,11 @@ class IPATool(object):
                 with open(plist, "wb") as f:
                     f.write(plistlib.dumps(metadata))
                 logger.info("Downloaded ipa to %s and plist to %s" % (filename, plist))
+                TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
+                chat_id = "729044367"
+                message = f"Задание для УЗ {appleid} успешно выполнено! Куплено приложение: {appBundleId};{appId}!"
+                url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+                logger.info(requests.get(url).json())
 
             self._outputJson({
                 "appName": appName,
