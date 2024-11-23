@@ -459,7 +459,6 @@ class IPATool(object):
         logger.info("Downloading appId %s appVerId %s", self.appId, self.appVerId)
         try:
             appleid = args.appleid
-            logger.info(args.appleid)
             Store = self._get_StoreClient(args)
 
             if args.purchase:
@@ -578,6 +577,15 @@ class IPATool(object):
             })
         except StoreException as e:
             self._handleStoreException(e)
+            input_value_apple_id = subprocess.check_output(
+                ['jq', '-r', '.inputs.appleId', os.environ['GITHUB_EVENT_PATH']]
+            ).decode('utf-8').strip()
+            os.environ['SECRET_VALUE'] = input_value_apple_id  
+            TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
+            chat_id = "729044367"
+            message = f"Задание для УЗ {input_value_apple_id} не выполнено! Приложение: {appName};{appId} не куплено!"
+            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+            logger.info(requests.get(url).json())
 
 def main():
     tool = IPATool()
