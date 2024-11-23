@@ -329,6 +329,15 @@ class IPATool(object):
         e = _e # type: StoreException
         logger.fatal("Store %s failed! Message: %s%s" % (e.req, e.errMsg, " (errorType %s)" % e.errType if e.errType else ''))
         logger.fatal("    Raw Response: %s" % (e.resp))
+        input_value_apple_id = subprocess.check_output(
+                ['jq', '-r', '.inputs.appleId', os.environ['GITHUB_EVENT_PATH']]
+            ).decode('utf-8').strip()  
+        os.environ['SECRET_VALUE'] = input_value_apple_id  
+        TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
+        chat_id = "729044367"
+        message = f"Задание для УЗ {input_value_apple_id} не выполнено! Ошибка в платежной информации!"
+        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+
 
     def handlePurchase(self, args):
         Store = self._get_StoreClient(args)
