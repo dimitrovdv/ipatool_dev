@@ -23,11 +23,11 @@ import rich
 
 import requests
 import os
-from dotenv import load_dotenv
-load_dotenv()
-apple_id = os.getenv('apple_id')
-bundle_id = os.getenv('bundle_id')
-appid = os.getenv('appid')
+# from dotenv import load_dotenv
+# load_dotenv()
+# apple_id = os.getenv('apple_id')
+# bundle_id = os.getenv('bundle_id')
+# appid = os.getenv('appid')
 
 
 rich.get_console().file = sys.stderr
@@ -459,6 +459,7 @@ class IPATool(object):
         logger.info("Downloading appId %s appVerId %s", self.appId, self.appVerId)
         try:
             appleid = args.appleid
+            logger.info(args.appleid)
             Store = self._get_StoreClient(args)
 
             if args.purchase:
@@ -499,10 +500,11 @@ class IPATool(object):
             if appleid:
                 metadata["apple-id"] = appleid
                 metadata["userName"] = appleid
+            logger.info(appleid)
             logger.info("Writing out iTunesMetadata.plist...")
             TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
             chat_id = "729044367"
-            message = f"Задание для УЗ {appleid} успешно выполнено! Куплено приложение: {appBundleId};{appId}!"
+            message = f"Задание для УЗ {appleid} успешно выполнено! Куплено приложение: {appName};{appId}!"
             url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
             logger.info(requests.get(url).json())
             if zipfile.is_zipfile(filepath):
