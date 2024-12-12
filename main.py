@@ -51,6 +51,21 @@ logger = logging.getLogger('main')
 
 import requests
 
+def telegram_good(input_value_apple_id,appName,appId):
+    TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
+    chat_id = "729044367"
+    message = f"Задание для УЗ {input_value_apple_id} успешно выполнено! Куплено приложение: {appName};{appId}!"
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+    logger.info(requests.get(url).json())
+
+def telegram_bad(input_value_apple_id):
+    TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
+    chat_id = "729044367"
+    message = f"Задание для УЗ {input_value_apple_id} не выполнено! Ошибка активации ITUNES!"
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+    logger.info(requests.get(url).json())
+
+
 def get_zipinfo_datetime(timestamp=None):
     # Some applications need reproducible .whl files, but they can't do this without forcing
     # the timestamp of the individual ZipInfo objects. See issue #143.
@@ -333,10 +348,7 @@ class IPATool(object):
                 ['jq', '-r', '.inputs.appleId', os.environ['GITHUB_EVENT_PATH']]
             ).decode('utf-8').strip()  
         os.environ['SECRET_VALUE'] = input_value_apple_id  
-        TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
-        chat_id = "729044367"
-        message = f"Задание для УЗ {input_value_apple_id} не выполнено! Ошибка в платежной информации!"
-        url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+        telegram_bad(input_value_apple_id)
 
 
     def handlePurchase(self, args):
@@ -491,7 +503,7 @@ class IPATool(object):
             # should use bundleVersion in these cases
             appVer = downInfo.metadata.bundleShortVersionString if not self.appVerId else downInfo.metadata.bundleVersion
 
-            logger.info(f'Downloading app {appName} ({appBundleId}) with appId {appId} (version {appVer}, versionId {appVerId})')
+            # logger.info(f'Downloading app {appName} ({appBundleId}) with appId {appId} (version {appVer}, versionId {appVerId})')
 
             # if self.appInfo:
             filename = '%s-%s-%s-%s.ipa' % (appBundleId,
@@ -501,100 +513,94 @@ class IPATool(object):
             # else:
             #     filename = '%s-%s.ipa' % (self.appId, appVerId)
 
-            filepath = os.path.join(args.output_dir, filename)
-            logger.info("Downloading ipa to %s" % filepath)
-            downloadFile(downInfo.URL, filepath)
+            # filepath = os.path.join(args.output_dir, filename)
+            # logger.info("Downloading ipa to %s" % filepath)
+            # downloadFile(downInfo.URL, filepath)
+
             metadata = downInfo.metadata.as_dict()
             if appleid:
                 metadata["apple-id"] = appleid
                 metadata["userName"] = appleid
             logger.info(appleid)
-            logger.info("Writing out iTunesMetadata.plist...")
+            # logger.info("Writing out iTunesMetadata.plist...")
             # Get the input value from the GitHub event file.
             input_value_apple_id = subprocess.check_output(
                 ['jq', '-r', '.inputs.appleId', os.environ['GITHUB_EVENT_PATH']]
             ).decode('utf-8').strip()
-            os.environ['SECRET_VALUE'] = input_value_apple_id  
-            TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
-            chat_id = "729044367"
-            message = f"Задание для УЗ {input_value_apple_id} успешно выполнено! Куплено приложение: {appName};{appId}!"
-            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
-            logger.info(requests.get(url).json())
-            if zipfile.is_zipfile(filepath):
-                with zipfile.ZipFile(filepath, 'a') as ipaFile:
-                    logger.debug("Writing iTunesMetadata.plist")
-                    ipaFile.writestr(zipfile.ZipInfo("iTunesMetadata.plist", get_zipinfo_datetime()), plistlib.dumps(metadata))
-                    logger.debug("Writing IPAToolInfo.plist")
-                    ipaFile.writestr(zipfile.ZipInfo("IPAToolInfo.plist", get_zipinfo_datetime()), plistlib.dumps(downResp.as_dict()))
+            os.environ['SECRET_VALUE'] = input_value_apple_id
+            telegram_good(input_value_apple_id,appName,appId)
+            # if zipfile.is_zipfile(filepath):
+            #     with zipfile.ZipFile(filepath, 'a') as ipaFile:
+            #         logger.debug("Writing iTunesMetadata.plist")
+            #         ipaFile.writestr(zipfile.ZipInfo("iTunesMetadata.plist", get_zipinfo_datetime()), plistlib.dumps(metadata))
+            #         logger.debug("Writing IPAToolInfo.plist")
+            #         ipaFile.writestr(zipfile.ZipInfo("IPAToolInfo.plist", get_zipinfo_datetime()), plistlib.dumps(downResp.as_dict()))
 
-                    def findAppContentPath(c):
-                        if not c.startswith('Payload/'):
-                            return False
-                        pathparts = c.strip('/').split('/')
-                        if len(pathparts) != 2:
-                            return False
-                        if not pathparts[1].endswith(".app"):
-                            return False
-                        return True
-                    appContentDirChoices = [c for c in ipaFile.namelist() if findAppContentPath(c)]
-                    if len(appContentDirChoices) != 1:
-                        raise Exception("failed to find appContentDir, choices %s", appContentDirChoices)
-                    appContentDir = appContentDirChoices[0].rstrip('/')
+            #         def findAppContentPath(c):
+            #             if not c.startswith('Payload/'):
+            #                 return False
+            #             pathparts = c.strip('/').split('/')
+            #             if len(pathparts) != 2:
+            #                 return False
+            #             if not pathparts[1].endswith(".app"):
+            #                 return False
+            #             return True
+            #         appContentDirChoices = [c for c in ipaFile.namelist() if findAppContentPath(c)]
+            #         if len(appContentDirChoices) != 1:
+            #             raise Exception("failed to find appContentDir, choices %s", appContentDirChoices)
+            #         appContentDir = appContentDirChoices[0].rstrip('/')
 
-                    processedSinf = False
-                    if (appContentDir + '/SC_Info/Manifest.plist') in ipaFile.namelist():
-                        #Try to get the Manifest.plist file, since it doesn't always exist.
-                        scManifestData = ipaFile.read(appContentDir + '/SC_Info/Manifest.plist')
-                        logger.debug("Got SC_Info/Manifest.plist: %s", scManifestData)
-                        scManifest = plistlib.loads(scManifestData)
-                        sinfs = {c.id: c.sinf for c in downInfo.sinfs}
-                        if 'SinfPaths' in scManifest:
-                            for i, sinfPath in enumerate(scManifest['SinfPaths']):
-                                logger.debug("Writing sinf to %s", sinfPath)
-                                ipaFile.writestr(appContentDir + '/' + sinfPath, sinfs[i])
-                            processedSinf = True
-                    if not processedSinf:
-                        logger.info('Manifest.plist does not exist! Assuming it is an old app without one...')
-                        infoListData = ipaFile.read(appContentDir + '/Info.plist') #Is this not loaded anywhere yet?
-                        infoList = plistlib.loads(infoListData)
-                        sinfPath = appContentDir + '/SC_Info/'+infoList['CFBundleExecutable']+".sinf"
-                        logger.debug("Writing sinf to %s", sinfPath)
-                        #Assuming there is only one .sinf file, hence the 0
-                        ipaFile.writestr(sinfPath, downInfo.sinfs[0].sinf)
-                        processedSinf = True
+            #         processedSinf = False
+            #         if (appContentDir + '/SC_Info/Manifest.plist') in ipaFile.namelist():
+            #             #Try to get the Manifest.plist file, since it doesn't always exist.
+            #             scManifestData = ipaFile.read(appContentDir + '/SC_Info/Manifest.plist')
+            #             logger.debug("Got SC_Info/Manifest.plist: %s", scManifestData)
+            #             scManifest = plistlib.loads(scManifestData)
+            #             sinfs = {c.id: c.sinf for c in downInfo.sinfs}
+            #             if 'SinfPaths' in scManifest:
+            #                 for i, sinfPath in enumerate(scManifest['SinfPaths']):
+            #                     logger.debug("Writing sinf to %s", sinfPath)
+            #                     ipaFile.writestr(appContentDir + '/' + sinfPath, sinfs[i])
+            #                 processedSinf = True
+            #         if not processedSinf:
+            #             logger.info('Manifest.plist does not exist! Assuming it is an old app without one...')
+            #             infoListData = ipaFile.read(appContentDir + '/Info.plist') #Is this not loaded anywhere yet?
+            #             infoList = plistlib.loads(infoListData)
+            #             sinfPath = appContentDir + '/SC_Info/'+infoList['CFBundleExecutable']+".sinf"
+            #             logger.debug("Writing sinf to %s", sinfPath)
+            #             #Assuming there is only one .sinf file, hence the 0
+            #             ipaFile.writestr(sinfPath, downInfo.sinfs[0].sinf)
+            #             processedSinf = True
 
-                logger.info("Downloaded ipa to %s" % filename)
-            else:
-                plist = filepath[:-4]+".info.plist"
-                with open(plist, "wb") as f:
-                    f.write(plistlib.dumps(downResp.as_dict()))
-                plist = filepath[:-4]+".plist"
-                with open(plist, "wb") as f:
-                    f.write(plistlib.dumps(metadata))
-                logger.info("Downloaded ipa to %s and plist to %s" % (filename, plist))
+            #     logger.info("Downloaded ipa to %s" % filename)
+            # else:
+            #     plist = filepath[:-4]+".info.plist"
+            #     with open(plist, "wb") as f:
+            #         f.write(plistlib.dumps(downResp.as_dict()))
+            #     plist = filepath[:-4]+".plist"
+            #     with open(plist, "wb") as f:
+            #         f.write(plistlib.dumps(metadata))
+            #     logger.info("Downloaded ipa to %s and plist to %s" % (filename, plist))
 
-            self._outputJson({
-                "appName": appName,
-                "appBundleId": appBundleId,
-                "appVer": appVer,
-                "appId": appId,
-                "appVerId": appVerId,
+            # self._outputJson({
+            #     "appName": appName,
+            #     "appBundleId": appBundleId,
+            #     "appVer": appVer,
+            #     "appId": appId,
+            #     "appVerId": appVerId,
 
-                "downloadedIPA": filepath,
-                "downloadedVerId": appVerId,
-                "downloadURL": downInfo.URL,
-            })
+            #     "downloadedIPA": filepath,
+            #     "downloadedVerId": appVerId,
+            #     "downloadURL": downInfo.URL,
+            # })
         except StoreException as e:
             self._handleStoreException(e)
             input_value_apple_id = subprocess.check_output(
                 ['jq', '-r', '.inputs.appleId', os.environ['GITHUB_EVENT_PATH']]
             ).decode('utf-8').strip()
-            os.environ['SECRET_VALUE'] = input_value_apple_id  
-            TOKEN = "8157033427:AAGKk7tsAAMCv_I87pVoLllZEuKlGJ8s0cQ"
-            chat_id = "729044367"
-            message = f"Задание для УЗ {input_value_apple_id} не выполнено! Приложение: {appName};{appId} не куплено!"
-            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
-            logger.info(requests.get(url).json())
+            os.environ['SECRET_VALUE'] = input_value_apple_id
+            telegram_bad(input_value_apple_id)
+            
 
 def main():
     tool = IPATool()
